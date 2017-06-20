@@ -132,8 +132,8 @@ class vk_bot:
             print('Connection timeout')
             pass
 
-        finally:  # Ну в целом можно повесить сюда увеличение таймаута при повторной ошибки...
-            return
+        # finally:  # Ну в целом можно повесить сюда увеличение таймаута при повторной ошибки...
+        #     return
 
     def get_lps(self):
         lps = self.vk.api.messages.getLongPollServer(need_pts=1)
@@ -151,3 +151,5 @@ bot = vk_bot()
 bot.get_lps()
 bot.import_commands()
 bot.get_msgs()
+del bot
+print('123')

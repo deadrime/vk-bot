@@ -34,7 +34,7 @@ class vk:
         self.self = self.api.users.get()[0]
         print(self.self)
 
-    @rate_limited(1)
+    @rate_limited(1.5)
     def send_msg(self, peer_id, msg, attachment=''):
         if not msg and not attachment:
             return
@@ -54,7 +54,7 @@ class vk:
     def get_user(self, user):
         return self.api.users.get(user_ids=user)
 
-    @rate_limited(0.21)
+    @rate_limited(0.25)
     def get_random_wall_picture(self, group_id):
         max_num = self.api.photos.get(owner_id=group_id, album_id='wall', count=0)['count']
         num = random.randint(1, max_num)
