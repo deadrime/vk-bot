@@ -60,20 +60,7 @@ class vk_bot:
         for c in self.commands_classes:
             c.run(self, msg)  # полная свобода командам, можно использовать все функции бота и всю инфу из сообщения
 
-    def read_msgs_history(self, msgs): # для метода .getLongPollHistory
-        # print(msgs)
-        for msg in msgs['items']:
-            # print(msg)
-            text = msg['body']
-            by = msg['user_id']  # целое, а не строчка
-            time = datetime.datetime.fromtimestamp(int(msg['date'])).strftime('%Y-%m-%d %H:%M:%S')
-            type = 'peer' if ('chat_id' in msg) else 'ls'
-            if type == 'peer':
-                by = msg['chat_id'] + 2000000000
-            # print(text + ' ' + str(by) + ' ' + time + ' ' + type)
-            self.check_for_command(msg)
-
-    def read_msg(self, msg_data):  # для сообщений из 'updates'
+    def read_msg(self, msg_data):  # Чтение сообщения из 'updates'
         # print(msg_data)
         msg_text = msg_data[5]
         msg_date = datetime.datetime.fromtimestamp(msg_data[4]).strftime('%H:%M:%S')  # %Y-%m-%d %H:%M:%S
