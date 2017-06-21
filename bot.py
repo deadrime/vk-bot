@@ -13,25 +13,10 @@ from vk import vk
 from rate import rate_limited
 
 
-class vk_msg:
-    def __init__(self, msg_id, msg_type, msg_date,from_id, msg_text, peer_id):
-        self.id = msg_id
-        self.type = msg_type
-        self.date = msg_date
-        self.from_id = from_id
-        self.text = msg_text
-        self.peer_id = peer_id
-
-    def get_all(self):
-        return self.id, self.type, self.date, self.from_id, self.text, self.peer_id
-
-
 class vk_bot:
     def __init__(self):
         # добавить парсинг из конфига
-        self.vk = vk()
-        self.vk.init_vk()
-
+        vk.init_vk()
         self.key = ''
         self.server = ''
         self.ts = 0
@@ -58,7 +43,7 @@ class vk_bot:
 
     def check_for_command(self, msg):
         for c in self.commands_classes:
-            c.run(self, msg)  # полная свобода командам, можно использовать все функции бота и всю инфу из сообщения
+            c.run(msg)  # решил что всей информации из сообщения вполне достаточно
 
     def read_msg(self, msg_data):  # Чтение сообщения из 'updates'
         # print(msg_data)
@@ -74,7 +59,7 @@ class vk_bot:
         else:
             msg_type = 'ls'
             # print('Сообщение из личной беседы с ' + str(from_id))
-        msg = vk_msg(msg_id, msg_type, msg_date,from_id, msg_text, peer_id)  # можно было обойтись массивом =/
+        msg = [msg_id, msg_type, msg_date,from_id, msg_text, peer_id]  # можно было обойтись массивом =/
         self.check_for_command(msg)
         print(msg_text + ' ' + msg_date)
 
@@ -144,7 +129,7 @@ class vk_bot:
         #     return
 
     def get_lps(self):
-        lps = self.vk.api.messages.getLongPollServer(need_pts=1)
+        lps = vk.api.messages.getLongPollServer(need_pts=1)
         self.key = lps['key']
         self.server = 'https://' + lps['server']
         self.ts = lps['ts']
@@ -153,7 +138,6 @@ class vk_bot:
     def get_msgs(self):
         while True:
             self.get_new_msg()
-
 
 bot = vk_bot()
 bot.get_lps()

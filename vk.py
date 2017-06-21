@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 import vk_requests
-import time
 import datetime
 import random
-import json
 from rate import rate_limited
 import configparser
 
 
-class vk:
+class vkapi:
     def __init__(self):
         self.app_id = 0
         self.login = ''
@@ -40,7 +38,8 @@ class vk:
             return
         self.api.messages.send(peer_id=peer_id, message=msg, attachment=attachment)
 
-    def msg_info(self, msg):
+    @staticmethod
+    def msg_info(msg):
         id = msg['id']
         text = msg['body']
         by = msg['user_id']  # целое, а не строчка
@@ -51,6 +50,7 @@ class vk:
             peer_id = msg['chat_id'] + 2000000000
         return id, text, by, time, type, peer_id
 
+    @rate_limited(0.3)
     def get_user(self, user):
         return self.api.users.get(user_ids=user)
 
@@ -69,3 +69,5 @@ class vk:
                 attachment += 'photo' + str(group_id) + '_' + str(photo['id']) + ','
             # print(attachment)
             return attachment[0:-1]  # обрезаю последнюю запятую
+
+vk = vkapi()

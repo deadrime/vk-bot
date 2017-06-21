@@ -1,5 +1,5 @@
 import random
-import time
+from vk import vk
 
 
 class pecel:
@@ -15,8 +15,8 @@ class pecel:
             [-33124129]
         ]
 
-    def run(self, bot, msg):
-        msg_id, msg_type, msg_date, from_id, msg_text, peer_id = msg.get_all()
+    def run(self, msg):
+        msg_id, msg_type, msg_date, from_id, msg_text, peer_id = msg
         count = 1
         for i in range(len(self.keys)):  # нужно попробовать сделать через словари, keys { ['!кот', '!котик', '!котэ']: [-33124129]}
             for key in self.keys[i]:
@@ -26,13 +26,13 @@ class pecel:
                             count = int(float(msg_text.split('*')[1]))
                         except Exception as error:  # Добавить сюда нормальную обработку ошибок, когда не получается преобразовать
                             print(error)            # текст в число
-                            bot.vk.send_msg(peer_id, 'Не выебывайся')
+                            vk.send_msg(peer_id, 'Не выебывайся')
                             return
                         count = 10 if count > 10 else count
                     msg = ''
                     group = self.groups[i][random.randrange(len(self.groups[i]))]  # рандомная группа из списка групп
-                    attachment = bot.vk.get_random_wall_picture(group, count)  # n рандомных картинок из этой группы
+                    attachment = vk.get_random_wall_picture(group, count)  # n рандомных картинок из этой группы
                     # print(attachment)
-                    bot.vk.send_msg(peer_id, msg, attachment)
+                    vk.send_msg(peer_id, msg, attachment)
                     return
         return

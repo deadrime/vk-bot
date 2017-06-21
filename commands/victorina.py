@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import random
-import time
-import json
-import os
 import _pickle as pickle
 from pathlib import Path
+from vk import vk
 
 
 class vk_room:
@@ -97,8 +95,8 @@ class victorina:
             f = open(gq, 'rb')
             self.good_questions = pickle.load(f)
 
-    def run(self, bot, msg):
-        msg_id, msg_type, msg_date, from_id, msg_text, peer_id = msg.get_all()
+    def run(self, msg):
+        msg_id, msg_type, msg_date, from_id, msg_text, peer_id = msg
 
         if msg_text == '!викторина':  # Запускаем гуся
             if peer_id not in self.active_rooms: # Если нет среди активных
@@ -106,25 +104,25 @@ class victorina:
                     # print('Запущено впервые')
                     new_room = vk_room(peer_id, self.bd)
                     new_room.prepare_question(self.bd)
-                    bot.vk.send_msg(peer_id,
+                    vk.send_msg(peer_id,
                                      'Викторина запущена!\nДоступные команды: !подсказка, !ответ, !стоп, !топ, !команды\n'
                                      'Если текущий вопрос хороший - напишете "+", если предыдущий - "++" \n'
                                      'Вопрос: '
                                      + new_room.current_question + ', ' + new_room.letters_in_answer())
                     self.rooms[peer_id] = new_room
                     self.active_rooms.append(peer_id)
-                    print(self.active_rooms)
+                    # print(self.active_rooms)
                 else:
                     # print('Есть в бд')
                     self.rooms[peer_id].prepare_question(self.bd)
-                    bot.vk.send_msg(peer_id,
+                    vk.send_msg(peer_id,
                                     'Викторина запущена!\nДоступные команды: !подсказка, !ответ, !стоп, !топ, !команды\n'
                                     'Если текущий вопрос хороший - напишете "+", если предыдущий - "++" \n'
                                     'Вопрос: '
                                     + self.rooms[peer_id].current_question + ', ' + self.rooms[peer_id].letters_in_answer())
                     self.active_rooms.append(peer_id) # Добавляем в активные комнаты
             else:   # Если есть среди активных
-                bot.vk.send_msg(peer_id,'Текущий вопрос:'
+                vk.send_msg(peer_id,'Текущий вопрос:'
                                 + self.rooms[peer_id].current_question + ', ' + self.rooms[peer_id].letters_in_answer())
             return
 
@@ -133,61 +131,59 @@ class victorina:
             if not room.is_guessed:  # И еще никто не угадал ответ
                 if msg_text == '!подсказка':  # Если нужна подсказка
                     hint = room.helping()
-                    bot.vk.send_msg(room.room_id, hint)
+                    vk.send_msg(room.room_id, hint)
                     return
-                    # break
 
                 elif room.current_answer.lower() == msg_text.lower():  # Если дан верный ответ
-                    user = bot.vk.api.users.get(user_ids=from_id)
+                    user = vk.api.users.get(user_ids=from_id)
                     points = (len(room.current_answer))
                     room.update_leaders(from_id, points)
                     msg = user[0]['first_name'] + ' ' + user[0]['last_name'] + ' верно ответил на вопрос и получает ' +  str(points) + ' очков!'
-                    bot.vk.send_msg(room.room_id, msg, '')
+                    vk.send_msg(room.room_id, msg, '')
                     room.prepare_question(self.bd)
-                    bot.vk.send_msg(room.room_id, 'Следующий вопрос:\n' + room.current_question + ', ' + room.letters_in_answer())
+                    vk.send_msg(room.room_id, 'Следующий вопрос:\n' + room.current_question + ', ' + room.letters_in_answer())
 
                     with open('rooms.pickle', 'wb') as f:
                         pickle.dump(self.rooms, f)
                         # print(self.active_rooms)
                     return
-                    # break
 
                 elif msg_text == '!топ':
                     msg = 'Топ этой беседы: '
                     for leader in room.leaders:
-                        user = bot.vk.api.users.get(user_ids=leader)
+                        user = vk.api.users.get(user_ids=leader)
                         msg += '\n' + user[0]['first_name'] + ' ' + user[0]['last_name'] + ': ' + str(room.leaders[leader]) + ' очков'
-                    bot.vk.send_msg(room.room_id, msg)
+                    vk.send_msg(room.room_id, msg)
                     return
-                    # break
 
                 elif msg_text == '!ответ':  # Если нужен след. вопрос
-                    bot.vk.send_msg(peer_id, room.current_answer, '')
+                    vk.send_msg(peer_id, room.current_answer, '')
                     room.prepare_question(self.bd)
-                    bot.vk.send_msg(peer_id, 'Следующий вопрос:\n' + room.current_question + ', ' + room.letters_in_answer())
+                    vk.send_msg(peer_id, 'Следующий вопрос:\n' + room.current_question + ', ' + room.letters_in_answer())
                     return
-                    # break
 
                 elif msg_text == '!стоп':  # Если надо остановить викторину
-                    bot.vk.send_msg(peer_id, 'Викторина остановлена\nОтвет на последний вопрос: ' + room.current_answer, '')
+                    vk.send_msg(peer_id, 'Викторина остановлена\nОтвет на последний вопрос: ' + room.current_answer, '')
                     self.active_rooms.remove(peer_id)
-                    print(self.active_rooms)
+                    # print(self.active_rooms)
                     return
 
                 elif msg_text == '+':
                     self.good_questions[room.current_question] = room.current_answer
-                    bot.vk.send_msg(peer_id, 'Вопрос добавлен в бд')
+                    vk.send_msg(peer_id, 'Вопрос добавлен в бд')
                     with open('good_questions.pickle', 'wb') as f:
                         pickle.dump(self.good_questions, f)
+                    return
 
                 elif msg_text == '++':
                     self.good_questions[room.last_question] = room.last_answer
-                    bot.vk.send_msg(peer_id, 'Предыдущий вопрос добавлен в бд')
+                    vk.send_msg(peer_id, 'Предыдущий вопрос добавлен в бд')
                     with open('good_questions.pickle', 'wb') as f:
                         pickle.dump(self.good_questions, f)
+                    return
 
                 elif msg_text == '!помощь':
-                    bot.vk.send_msg(peer_id, 'Список команд:\n'
+                    vk.send_msg(peer_id, 'Список команд:\n'
                                              '!викторина - запустить викторину\n'
                                              '!ответ - получить ответ и новый вопрос\n'
                                              '!стоп - остановить викторину\n'
@@ -195,3 +191,4 @@ class victorina:
                                              '+ - пометить текущий вопрос как хороший\n'
                                              '++ - пометить предыдущий вопрос как хороший\n'
                                     )
+                    return
