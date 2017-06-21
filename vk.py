@@ -54,10 +54,18 @@ class vk:
     def get_user(self, user):
         return self.api.users.get(user_ids=user)
 
-    @rate_limited(0.25)
-    def get_random_wall_picture(self, group_id):
+    @rate_limited(0.3)
+    def get_random_wall_picture(self, group_id, count=1):
         max_num = self.api.photos.get(owner_id=group_id, album_id='wall', count=0)['count']
         num = random.randint(1, max_num)
-        photo = self.api.photos.get(owner_id=str(group_id), album_id='wall', count=1, offset=num)['items'][0]['id']
-        attachment = 'photo' + str(group_id) + '_' + str(photo)
-        return attachment
+        photos = self.api.photos.get(owner_id=str(group_id), album_id='wall', count=count, offset=num)['items']
+        # print(photos)
+        attachment =''
+        if count == 1:
+            attachment += 'photo' + str(group_id) + '_' + str(photos[0]['id']) + ','
+            return attachment
+        else:
+            for photo in photos:
+                attachment += 'photo' + str(group_id) + '_' + str(photo['id']) + ','
+            # print(attachment)
+            return attachment[0:-1]  # обрезаю последнюю запятую
