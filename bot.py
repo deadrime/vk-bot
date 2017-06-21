@@ -78,7 +78,7 @@ class vk_bot:
         self.check_for_command(msg)
         print(msg_text + ' ' + msg_date)
 
-    @rate_limited(1)  # Не думаю, что он тут нужен
+    # @rate_limited(1)  # Не думаю, что он тут нужен
     def get_new_msg(self):
         try:
             # https://{$server}?act=a_check&key={$key}&ts={$ts}&wait=25&mode=2&version=2
@@ -91,20 +91,28 @@ class vk_bot:
                 'version': 2
             }
             url = self.server
-            r = requests.request(method='GET', url=url, params=params, timeout=30)  # Если поставить 25 - сервер немного не успевает
-            data = json.loads(r.text)
+            try: # Пробуем получить ответ от long poll
+                r = requests.request(method='GET', url=url, params=params, timeout=30)  # Если поставить 25 - сервер немного не успевает
+            except requests.exceptions.RequestException as e:  # This is the correct syntax
+                print(e)
+                return
+            try: # Пробуем прочитать этот ответ
+                data = json.loads(r.text)
+            except Exception as error: # Пока не разобрался, какие именно ошибки отлавливать
+                print(error)
+                return
             # print(data)
 
-            if 'failed' in data:
+            if 'failed' in data:  # Если сервер прислал сообщение об ошибке
                 print(data)
-                if data['failed'] == 1:
+                if data['failed'] == 1:  # ts устарел
                     self.ts = data['ts']
                     return
-                if data['failed'] in [2, 3]:
+                if data['failed'] in [2, 3]:  # ts и lps устарел
                     self.get_lps()
                     return
 
-            if 'ts' in data:  # Обновляем ts
+            if 'ts' in data:  # Обновляем ts, если есть что обновлять
                 self.ts = data['ts']
 
             for upd in data['updates']:  # Ищем событие о новом сообщении
@@ -116,11 +124,11 @@ class vk_bot:
             print('Что-то пошло не так')
             print(vk_error.error_data)
             print(error_code)
-            if error_code == 907 or error_code == 908:
+            if error_code == 907 or error_code == 908:  # обновление ts, pts
                 print('Сессия обновлена')
                 self.get_lps()
                 return -1
-            if error_code == 14:
+            if error_code == 14:  # капча
                 print('Проблемесы с капчей, все пропало!')
                 self.__init__()
 
@@ -132,7 +140,7 @@ class vk_bot:
             print('Connection timeout')
             pass
 
-        # finally:  # Ну в целом можно повесить сюда увеличение таймаута при повторной ошибки...
+        # finally:  # если хотим игнорировать ошибки
         #     return
 
     def get_lps(self):
@@ -151,5 +159,3 @@ bot = vk_bot()
 bot.get_lps()
 bot.import_commands()
 bot.get_msgs()
-del bot
-print('123')
